@@ -207,31 +207,34 @@ issue = issue_agent.create_issue(
 - ✅ Create all documentation in `docs/` folder instead
 
 ### Claude-Generated Content Location
-**CRITICAL**: All Claude-generated docs and scripts must go in the `claude_workspace/` folder.
+**CRITICAL**: All Claude-generated content must go in the `.claude/` folder with proper organization.
 
-- ✅ Documentation → `claude_workspace/docs/`
-- ✅ Test scripts → `claude_workspace/scripts/`
-- ✅ Demo scripts → `claude_workspace/scripts/`
-- ✅ Setup guides → `claude_workspace/docs/`
-- ✅ Any other Claude artifacts → `claude_workspace/`
+- ✅ Documentation & guides → `.claude/docs/`
+- ✅ Test scripts → `.claude/tests/`
+- ✅ Demo scripts → `.claude/demos/`
+- ✅ Utility scripts → `.claude/utilities/`
 - ❌ DO NOT scatter files in root or random locations
 - ❌ NEVER put documentation in root README.md
 
 ### Folder Organization
 ```
-claude_workspace/
-  ├── docs/        # All Claude-generated documentation
-  └── scripts/     # All Claude-generated test/demo scripts
-agents/            # Git automation agents (separate from Claude workspace)
-datasets/          # Data files
-README.md          # User's personal notes ONLY
+.claude/
+  ├── CLAUDE.md                # Project-specific instructions
+  ├── settings.local.json      # Claude Code settings
+  ├── docs/                    # All documentation and guides
+  ├── tests/                   # Test scripts for validation
+  ├── demos/                   # Demo and example scripts
+  └── utilities/               # Utility and helper scripts
+agents/                        # Git automation agents
+datasets/                      # Data files
+README.md                      # User's personal notes ONLY
 ```
 
 **Benefits**:
-- All Claude content in ONE place
+- All Claude content organized in ONE place under .claude/
+- Clear separation by purpose (docs, tests, demos, utilities)
 - Easy to find, review, or clean up
-- Clear separation from user's production code
-- Simple to .gitignore if needed
+- Natural grouping with Claude configuration
 
 ## Cleanup Rules
 
