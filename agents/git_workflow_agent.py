@@ -421,9 +421,11 @@ class GitWorkflowAgent:
             args.append("--force")
 
         if set_upstream:
-            args.extend(["--set-upstream", "origin"])
-
-        if branch:
+            # Get current branch if not specified
+            if not branch:
+                branch = self.get_current_branch().name
+            args.extend(["--set-upstream", "origin", branch])
+        elif branch:
             args.append(branch)
 
         self._run_git_command(args)
