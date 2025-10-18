@@ -16,9 +16,13 @@
 - Check compatibility with Python 3.11 when suggesting libraries
 - Test scripts should be compatible with Python 3.11
 
-## 🤖 ALWAYS USE THE PROJECT AGENTS
+## 🤖 Git Workflow Tools: Two Options
 
-**CRITICAL**: This project has custom-built Git automation agents. You MUST use these agents instead of raw git/gh commands.
+This project has **two ways** to work with Git and GitHub. Choose based on the task type:
+
+### Option 1: Interactive Agents (Primary - Use During Claude Code Sessions)
+
+**CRITICAL**: For interactive development, you MUST use these agents instead of raw git/gh commands.
 
 ### Required Agent Usage
 
@@ -74,6 +78,41 @@ workflow_agent = GitWorkflowAgent()
    - PR creation and management
    - Status, diff, stash operations
    - Full documentation: `agents/GIT_WORKFLOW_AGENT_GUIDE.md`
+
+### Option 2: GitHub Actions (For Automated Tasks)
+
+**Use for**: One-shot automated tasks that don't need incremental commits
+
+**Setup**: `.github/workflows/claude.yml` (configured)
+
+**Usage**: Comment on issues or PRs with `@claude` mentions
+```
+@claude write comprehensive tests for the RDS connection
+@claude /review this PR
+@claude fix the bug described in this issue
+@claude generate API documentation
+```
+
+**What happens**:
+- Claude reads the issue/PR context
+- Analyzes codebase
+- Creates complete PR with all changes
+- You review and merge
+
+### When to Use Each:
+
+| Task | Use This | Why |
+|------|----------|-----|
+| Building features step-by-step | **Interactive Agents** | Need feedback and incremental commits |
+| Writing all tests for a module | **GitHub Actions** | Just want complete test PR to review |
+| Debugging with feedback | **Interactive Agents** | Back-and-forth problem solving |
+| Code review automation | **GitHub Actions** | Async review, no interaction needed |
+| Implementing with approval | **Interactive Agents** | Approve each change as you go |
+| Generate documentation | **GitHub Actions** | One-shot generation, review result |
+
+**Note**: GitHub Actions requires:
+1. Installing the Claude GitHub App: https://github.com/apps/claude
+2. Adding `ANTHROPIC_API_KEY` to repository secrets
 
 ## Git Workflow Rules
 
