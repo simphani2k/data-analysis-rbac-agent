@@ -167,21 +167,32 @@ issue = issue_agent.create_issue(
 - ✅ README.md is reserved for user's personal notes and comments only
 - ✅ Create all documentation in `docs/` folder instead
 
-### Documentation Location
-All Claude-generated documentation must go in the `docs/` folder:
-- ✅ Technical documentation → `docs/`
-- ✅ API documentation → `docs/`
-- ✅ Architecture documents → `docs/`
-- ✅ Setup guides → `docs/`
+### Claude-Generated Content Location
+**CRITICAL**: All Claude-generated docs and scripts must go in the `claude_workspace/` folder.
+
+- ✅ Documentation → `claude_workspace/docs/`
+- ✅ Test scripts → `claude_workspace/scripts/`
+- ✅ Demo scripts → `claude_workspace/scripts/`
+- ✅ Setup guides → `claude_workspace/docs/`
+- ✅ Any other Claude artifacts → `claude_workspace/`
+- ❌ DO NOT scatter files in root or random locations
 - ❌ NEVER put documentation in root README.md
 
-Example:
+### Folder Organization
 ```
-✅ docs/architecture.md
-✅ docs/api-reference.md
-✅ docs/setup-guide.md
-❌ README.md (user only!)
+claude_workspace/
+  ├── docs/        # All Claude-generated documentation
+  └── scripts/     # All Claude-generated test/demo scripts
+agents/            # Git automation agents (separate from Claude workspace)
+datasets/          # Data files
+README.md          # User's personal notes ONLY
 ```
+
+**Benefits**:
+- All Claude content in ONE place
+- Easy to find, review, or clean up
+- Clear separation from user's production code
+- Simple to .gitignore if needed
 
 ## Cleanup Rules
 
