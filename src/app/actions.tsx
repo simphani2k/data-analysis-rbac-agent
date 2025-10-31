@@ -2,7 +2,8 @@
 
 import { createStreamableValue } from 'ai/rsc';
 import { CoreMessage, streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { openai, createOpenAI } from '@ai-sdk/openai';
+import { env } from 'process';
 import { Weather } from '@/components/weather';
 import { generateText } from 'ai';
 import { createStreamableUI } from 'ai/rsc';
@@ -18,8 +19,15 @@ export interface Message {
 
 // Streaming Chat 
 export async function continueTextConversation(messages: CoreMessage[]) {
+  // Use custom baseURL and model if provided
+  const openaiUrl = process.env.OPENAI_URL;
+  const openaiModel = process.env.OPENAI_MODEL || 'gpt-4-turbo';
+  const openaiProvider = openaiUrl
+    ? createOpenAI({ baseURL: openaiUrl, apiKey: process.env.OPENAI_API_KEY })
+    : openai;
+
   const result = await streamText({
-    model: openai('gpt-4-turbo'),
+    model: openaiProvider(openaiModel),
     messages,
   });
 
@@ -31,8 +39,14 @@ export async function continueTextConversation(messages: CoreMessage[]) {
 export async function continueConversation(history: Message[]) {
   const stream = createStreamableUI();
 
+  const openaiUrl = process.env.OPENAI_URL;
+  const openaiModel = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+  const openaiProvider = openaiUrl
+    ? createOpenAI({ baseURL: openaiUrl, apiKey: process.env.OPENAI_API_KEY })
+    : openai;
+
   const { text, toolResults } = await generateText({
-    model: openai('gpt-3.5-turbo'),
+    model: openaiProvider(openaiModel),
     system: 'You are a friendly weather assistant!',
     messages: history,
     tools: {
@@ -46,7 +60,7 @@ export async function continueConversation(history: Message[]) {
         }),
         execute: async ({ city, unit }) => {
           stream.done(<Weather city={city} unit={unit} />);
-          return `Here's the weather for ${city}!`; 
+          return `Here's the weather for ${city}!`;
         },
       },
     },
