@@ -1,69 +1,83 @@
-# Data Analysis RBAC Agent
+# 🛡️ Data Analysis RBAC Agent
 
-AI-powered **data analysis agent** with **Role-Based Access Control (RBAC)** hosted on **AWS**.  
-This is a **monorepo** containing both the backend and frontend of the application, built with **Next.js**.
+AI-powered **data analysis agent** with **Role-Based Access Control (RBAC)**, hosted on **AWS**.
+
+This is a **monorepo** containing both the backend and frontend, built with **Next.js**.
 
 ---
 
 ## 🚀 Getting Started
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) and designed to be fun and easy to get your hands dirty with the **AI SDK**.
+This project is bootstrapped with [Next.js](https://nextjs.org/) and designed for rapid experimentation with the **AI SDK**.
 
-### Run the development server
+### Development
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-Then open http://localhost:3000 in your browser to see the result.
+1. **Install dependencies:**
+   ```bash
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
+   # or
+   bun install
+   ```
 
-You can start editing the frontend by modifying app/page.tsx. The page auto-updates as you edit.
+2. **Run the development server:**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   # or
+   pnpm dev
+   # or
+   bun dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-This project uses next/font to automatically optimize and load Inter, a custom Google Font.
+3. **Edit the frontend:**
+   - Modify [`src/app/page.tsx`](src/app/page.tsx). The page auto-updates as you edit.
 
-📊 Dataset Requirements (Retail Sector)
-These requirements are for selecting retail datasets to power the data analysis agent.
+4. **Fonts:**
+   - Uses `next/font` to automatically optimize and load Inter (Google Font).
 
-Requirements
-Multi-table (e.g., sales, inventory, products, customers, stores, optionally employees/promotions)
+---
 
-Realistic, with order-level detail, product/category/customer/store info, and time/date fields
+## 📊 Dataset Requirements (Retail Sector)
 
-In CSV (preferred) or other easy-to-import formats for Postgres/SQL
+To power the data analysis agent, use datasets that meet these requirements:
 
-Large enough — thousands of records, multiple years if possible
+- **Multi-table:** e.g., sales, inventory, products, customers, stores, (optionally employees/promotions)
+- **Realistic:** Order-level detail, product/category/customer/store info, time/date fields
+- **Format:** CSV (preferred) or other easy-to-import formats for Postgres/SQL
+- **Size:** Thousands of records, multiple years if possible
+- **Documentation:** Basic table and column descriptions
 
-Well-documented with basic table and column descriptions
+### Example Datasets
 
-Example Datasets
-Cleaned Contoso Dataset (Kaggle)
+- [Cleaned Contoso Dataset (Kaggle)](https://www.kaggle.com/datasets)
+- [DemoData.ai Retail Demo Data](https://demodata.ai/)
+- [Retail Sales Analysis SQL Project (GitHub - najirh)](https://github.com/najirh/retail-sales-analysis)
+- [SQL Retail Data Analysis (GitHub - Mahanteshrn)](https://github.com/Mahanteshrn/SQL-Retail-Data-Analysis)
+- [Sample Sales Data (Kaggle)](https://www.kaggle.com/datasets)
+- [ContosoTR (Kaggle)](https://www.kaggle.com/datasets)
 
-DemoData.ai Retail Demo Data
+---
 
-Retail Sales Analysis SQL Project (GitHub - najirh)
+## 📚 Learn More
 
-SQL Retail Data Analysis (GitHub - Mahanteshrn)
+- [Next.js Documentation](https://nextjs.org/docs) — Features and API
+- [Learn Next.js](https://nextjs.org/learn) — Interactive tutorial
+- [Next.js GitHub Repository](https://github.com/vercel/next.js) — Feedback and contributions welcome!
 
-Sample Sales Data (Kaggle)
+---
 
-ContosoTR (Kaggle)
+## ☁️ Deploy on Vercel
 
-📚 Learn More
-To learn more about Next.js, check out:
+The easiest way to deploy your Next.js app is via the [Vercel Platform](https://vercel.com/) from the creators of Next.js.
 
-Next.js Documentation — learn about features and API
+See the [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
 
-Learn Next.js — interactive tutorial
+---
 
-Next.js GitHub Repository — feedback and contributions welcome!
-
-☁️ Deploy on Vercel
-The easiest way to deploy your Next.js app is via the
-Vercel Platform
-from the creators of Next.js.
-
-See the Next.js deployment documentation for more details.
+![Screenshot](public/screenshot.png)
