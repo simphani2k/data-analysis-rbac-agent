@@ -40,9 +40,6 @@ export default function GenUI() {
               <div>
                 {message.content as string}
               </div>
-              <div>
-                {message.display}
-              </div>
             </div>
           </div>
         ))}

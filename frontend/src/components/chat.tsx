@@ -10,18 +10,10 @@ import  Link from "next/link";
 import AboutCard from "@/components/cards/aboutcard";
 export const maxDuration = 30;
 
-// Helper function to read async generator
-async function readStreamableValue(stream: AsyncGenerator<string, void, unknown>) {
-  const values: string[] = [];
-  for await (const value of stream) {
-    values.push(value);
-  }
-  return values;
-}
-
 export default function Chat() {
   const [messages, setMessages] = useState<CoreMessage[]>([]);
-  const [input, setInput] = useState<string>('');  
+  const [input, setInput] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,16 +23,16 @@ export default function Chat() {
     ];
     setMessages(newMessages);
     setInput('');
+    setIsLoading(true);
     
     try {
-      const result = await continueTextConversation(newMessages);
-      const contents = await readStreamableValue(result.value);
+      const response = await continueTextConversation(newMessages);
       
       setMessages([
         ...newMessages,
         {
           role: 'assistant',
-          content: contents.join(''), 
+          content: response,
         },
       ]);
     } catch (error) {
@@ -52,6 +44,8 @@ export default function Chat() {
           content: 'Sorry, I encountered an error. Please try again.',
         },
       ]);
+    } finally {
+      setIsLoading(false);
     }
   }
   
@@ -85,7 +79,7 @@ export default function Chat() {
                   className="w-[95%] mr-2 border-0 ring-offset-0 focus-visible:ring-0 focus-visible:outline-none focus:outline-none focus:ring-0 ring-0 focus-visible:border-none border-transparent focus:border-transparent focus-visible:ring-none"
                   placeholder='Ask me anything...'
                 />
-                <Button disabled={!input.trim()}>
+                <Button disabled={!input.trim() || isLoading}>
                   <IconArrowUp />
                 </Button>
               </div>

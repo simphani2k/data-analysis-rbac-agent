@@ -1,12 +1,8 @@
 'use server';
 
-import { Weather } from '@/components/weather';
-import { ReactNode } from 'react';
-
 export interface Message {
   role: 'user' | 'assistant';
   content: string;
-  display?: ReactNode;
 }
 
 export interface CoreMessage {
@@ -14,19 +10,13 @@ export interface CoreMessage {
   content: string;
 }
 
-// Simple streamable value replacement
-function createSimpleStreamableValue(value: string) {
-  return {
-    value: (async function* () {
-      yield value;
-    })(),
-  };
-}
-
 // Streaming Chat using Groq API
-export async function continueTextConversation(messages: CoreMessage[]) {
+export async function continueTextConversation(messages: CoreMessage[]): Promise<string> {
   const groqApiUrl = process.env.GROQ_API_URL || 'http://3.80.111.127:8000';
   const groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  
+  console.log('Groq API URL:', groqApiUrl);
+  console.log('Attempting to call Groq API...');
   
   try {
     // Call Groq API
@@ -43,20 +33,26 @@ export async function continueTextConversation(messages: CoreMessage[]) {
       }),
     });
 
+    console.log('Response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`Groq API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Groq API error response:', errorText);
+      throw new Error(`Groq API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
-    return createSimpleStreamableValue(data.response);
+    console.log('Groq API response received successfully');
+    return data.response;
   } catch (error) {
     console.error('Error calling Groq API:', error);
+    console.error('Error details:', error instanceof Error ? error.message : String(error));
     throw error;
   }
 }
 
 // Gen UIs using Groq API
-export async function continueConversation(history: Message[]) {
+export async function continueConversation(history: Message[]): Promise<{ messages: Message[] }> {
   const groqApiUrl = process.env.GROQ_API_URL || 'http://3.80.111.127:8000';
   const groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
@@ -82,19 +78,6 @@ export async function continueConversation(history: Message[]) {
     }
 
     const data = await response.json();
-    
-    // Simple weather detection (you can enhance this with better NLP)
-    const weatherKeywords = ['weather', 'temperature', 'forecast', 'climate'];
-    const messageText = lastMessage.content.toLowerCase();
-    const isWeatherQuery = weatherKeywords.some(keyword => messageText.includes(keyword));
-    
-    let displayComponent = null;
-    if (isWeatherQuery) {
-      // Extract city from message (simple approach)
-      const cityMatch = messageText.match(/in\s+([a-z\s]+)/i);
-      const city = cityMatch ? cityMatch[1].trim() : 'New York';
-      displayComponent = <Weather city={city} unit="fahrenheit" />;
-    }
 
     return {
       messages: [
@@ -102,7 +85,6 @@ export async function continueConversation(history: Message[]) {
         {
           role: 'assistant' as const,
           content: data.response,
-          display: displayComponent,
         },
       ],
     };
@@ -114,7 +96,6 @@ export async function continueConversation(history: Message[]) {
         {
           role: 'assistant' as const,
           content: 'Sorry, I encountered an error. Please try again.',
-          display: null,
         },
       ],
     };
