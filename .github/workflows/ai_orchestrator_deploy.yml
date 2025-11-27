@@ -1,0 +1,53 @@
+name: Deploy AI Orchestrator to EC2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ai-orchestrator/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Setup SSH agent (for connecting to EC2)
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      # Step 3: Copy ai-orchestrator code to EC2 using rsync over SSH
+      - name: Sync ai-orchestrator files to EC2
+        run: |
+          rsync -avz --exclude '.git' --exclude 'venv' --exclude '__pycache__' --exclude '.env' \
+          -e "ssh -o StrictHostKeyChecking=no" \
+          ./ai-orchestrator/ ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/ai-orchestrator
+
+      # Step 4: Install dependencies and restart service on EC2
+      - name: Deploy and restart AI Orchestrator service
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} '
+            set -e
+            cd /home/ubuntu/ai-orchestrator
+            
+            # Create virtual environment if it doesn't exist
+            if [ ! -d "venv" ]; then
+              python3 -m venv venv
+            fi
+            
+            # Activate virtual environment and install dependencies
+            source venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt --no-input
+            
+            # Restart the service
+            sudo systemctl restart ai-orchestrator
+            sudo systemctl status ai-orchestrator --no-pager
+          '
