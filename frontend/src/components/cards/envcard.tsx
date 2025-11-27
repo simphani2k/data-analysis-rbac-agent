@@ -7,8 +7,8 @@ export default async function EnvCard() {
       <div className="bg-red-500 text-slate-50 rounded shadow-md p-2 leading-tight">
         <h2 className="text-sm font-bold">Heads up!</h2>
         <p className="text-xs flex flex-col">
-          <span>You need to add an OPENAI_API_KEY as an environment variable.</span>
-          <span>See the .env.example file for an example.</span>
+          <span>Cannot connect to Groq API (AI Orchestrator).</span>
+          <span>Make sure GROQ_API_URL is set correctly in your .env file.</span>
         </p>
       </div>
     </div>
