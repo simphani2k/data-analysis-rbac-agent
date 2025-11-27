@@ -1,12 +1,8 @@
 'use server';
 
-import { Weather } from '@/components/weather';
-import { ReactNode } from 'react';
-
 export interface Message {
   role: 'user' | 'assistant';
   content: string;
-  display?: ReactNode;
 }
 
 export interface CoreMessage {
@@ -56,7 +52,7 @@ export async function continueTextConversation(messages: CoreMessage[]): Promise
 }
 
 // Gen UIs using Groq API
-export async function continueConversation(history: Message[]) {
+export async function continueConversation(history: Message[]): Promise<{ messages: Message[] }> {
   const groqApiUrl = process.env.GROQ_API_URL || 'http://3.80.111.127:8000';
   const groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
@@ -82,19 +78,6 @@ export async function continueConversation(history: Message[]) {
     }
 
     const data = await response.json();
-    
-    // Simple weather detection (you can enhance this with better NLP)
-    const weatherKeywords = ['weather', 'temperature', 'forecast', 'climate'];
-    const messageText = lastMessage.content.toLowerCase();
-    const isWeatherQuery = weatherKeywords.some(keyword => messageText.includes(keyword));
-    
-    let displayComponent = null;
-    if (isWeatherQuery) {
-      // Extract city from message (simple approach)
-      const cityMatch = messageText.match(/in\s+([a-z\s]+)/i);
-      const city = cityMatch ? cityMatch[1].trim() : 'New York';
-      displayComponent = <Weather city={city} unit="fahrenheit" />;
-    }
 
     return {
       messages: [
@@ -102,7 +85,6 @@ export async function continueConversation(history: Message[]) {
         {
           role: 'assistant' as const,
           content: data.response,
-          display: displayComponent,
         },
       ],
     };
@@ -114,7 +96,6 @@ export async function continueConversation(history: Message[]) {
         {
           role: 'assistant' as const,
           content: 'Sorry, I encountered an error. Please try again.',
-          display: null,
         },
       ],
     };
