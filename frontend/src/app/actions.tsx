@@ -1,11 +1,7 @@
 'use server';
 
-import { createStreamableValue } from 'ai/rsc';
-import { CoreMessage } from 'ai';
 import { Weather } from '@/components/weather';
-import { createStreamableUI } from 'ai/rsc';
 import { ReactNode } from 'react';
-import { z } from 'zod';
 
 export interface Message {
   role: 'user' | 'assistant';
@@ -13,6 +9,19 @@ export interface Message {
   display?: ReactNode;
 }
 
+export interface CoreMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+// Simple streamable value replacement
+function createSimpleStreamableValue(value: string) {
+  return {
+    value: (async function* () {
+      yield value;
+    })(),
+  };
+}
 
 // Streaming Chat using Groq API
 export async function continueTextConversation(messages: CoreMessage[]) {
@@ -39,8 +48,7 @@ export async function continueTextConversation(messages: CoreMessage[]) {
     }
 
     const data = await response.json();
-    const stream = createStreamableValue(data.response);
-    return stream.value;
+    return createSimpleStreamableValue(data.response);
   } catch (error) {
     console.error('Error calling Groq API:', error);
     throw error;
@@ -49,7 +57,6 @@ export async function continueTextConversation(messages: CoreMessage[]) {
 
 // Gen UIs using Groq API
 export async function continueConversation(history: Message[]) {
-  const stream = createStreamableUI();
   const groqApiUrl = process.env.GROQ_API_URL || 'http://3.80.111.127:8000';
   const groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
@@ -81,11 +88,12 @@ export async function continueConversation(history: Message[]) {
     const messageText = lastMessage.content.toLowerCase();
     const isWeatherQuery = weatherKeywords.some(keyword => messageText.includes(keyword));
     
+    let displayComponent = null;
     if (isWeatherQuery) {
       // Extract city from message (simple approach)
       const cityMatch = messageText.match(/in\s+([a-z\s]+)/i);
       const city = cityMatch ? cityMatch[1].trim() : 'New York';
-      stream.done(<Weather city={city} unit="F" />);
+      displayComponent = <Weather city={city} unit="fahrenheit" />;
     }
 
     return {
@@ -94,7 +102,7 @@ export async function continueConversation(history: Message[]) {
         {
           role: 'assistant' as const,
           content: data.response,
-          display: stream.value,
+          display: displayComponent,
         },
       ],
     };
@@ -106,7 +114,7 @@ export async function continueConversation(history: Message[]) {
         {
           role: 'assistant' as const,
           content: 'Sorry, I encountered an error. Please try again.',
-          display: stream.value,
+          display: null,
         },
       ],
     };

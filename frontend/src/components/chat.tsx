@@ -1,16 +1,23 @@
 'use client';
 
 import { Card } from "@/components/ui/card"
-import { type CoreMessage } from 'ai';
 import { useState } from 'react';
-import { continueTextConversation } from '@/app/actions';
-import { readStreamableValue } from 'ai/rsc';
+import { continueTextConversation, type CoreMessage } from '@/app/actions';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { IconArrowUp } from '@/components/ui/icons';
 import  Link from "next/link";
 import AboutCard from "@/components/cards/aboutcard";
 export const maxDuration = 30;
+
+// Helper function to read async generator
+async function readStreamableValue(stream: AsyncGenerator<string, void, unknown>) {
+  const values: string[] = [];
+  for await (const value of stream) {
+    values.push(value);
+  }
+  return values;
+}
 
 export default function Chat() {
   const [messages, setMessages] = useState<CoreMessage[]>([]);
@@ -24,13 +31,25 @@ export default function Chat() {
     ];
     setMessages(newMessages);
     setInput('');
-    const result = await continueTextConversation(newMessages);
-    for await (const content of readStreamableValue(result)) {
+    
+    try {
+      const result = await continueTextConversation(newMessages);
+      const contents = await readStreamableValue(result.value);
+      
       setMessages([
         ...newMessages,
         {
           role: 'assistant',
-          content: content as string, 
+          content: contents.join(''), 
+        },
+      ]);
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages([
+        ...newMessages,
+        {
+          role: 'assistant',
+          content: 'Sorry, I encountered an error. Please try again.',
         },
       ]);
     }
