@@ -20,10 +20,34 @@ jobs:
       # Step 2: Setup SSH key
       - name: Setup SSH key
         run: |
-          mkdir -p ~/.ssh
+          # Debug: Check home directory and permissions
+          echo "Home directory: $HOME"
+          echo "Current user: $(whoami)"
+          ls -la ~ || true
+          
+          # Create .ssh directory with proper error handling
+          if [ -f ~/.ssh ]; then
+            echo "Error: ~/.ssh exists as a file, removing it"
+            rm -f ~/.ssh
+          fi
+          
+          mkdir -p ~/.ssh || {
+            echo "Failed to create ~/.ssh directory"
+            echo "Checking if .ssh exists and its type:"
+            ls -ld ~/.ssh 2>&1 || echo ".ssh does not exist"
+            exit 1
+          }
+          
+          # Set proper permissions on .ssh directory
+          chmod 700 ~/.ssh
+          
+          # Create SSH key file
           echo "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          
+          # Add host to known_hosts
           ssh-keyscan -H 54.183.212.95 >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
           
           # Verify key format
           echo "Checking SSH key format..."
