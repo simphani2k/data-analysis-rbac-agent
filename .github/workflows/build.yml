@@ -136,12 +136,18 @@ jobs:
 
       # Step 5: Health Check
       - name: Health Check
+        timeout-minutes: 5
         run: |
           echo "Waiting for service to start..."
           sleep 10
           
           echo "Checking service status on EC2..."
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@54.183.212.95 '
+          ssh -i ~/.ssh/id_rsa \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=30 \
+            -o ServerAliveInterval=10 \
+            -o ServerAliveCountMax=3 \
+            ubuntu@54.183.212.95 '
             echo "=== Service Status ==="
             if sudo systemctl is-active --quiet ai-orchestrator; then
               echo "✅ Service is active and running"
@@ -174,25 +180,43 @@ jobs:
             echo ""
             echo "=== Recent Logs ==="
             sudo journalctl -u ai-orchestrator -n 20 --no-pager
-          '
-          
-          echo ""
-          echo "=== Testing API Query Endpoint ==="
-          RESPONSE=$(curl -s -X POST "http://54.183.212.95:8000/api/data/query" \
-            -H "Content-Type: application/json" \
-            -d '{"question": "Show me the top 5 products by sales"}')
-          
-          echo "API Response: $RESPONSE"
-          
-          # Check if response.error is null
-          ERROR=$(echo "$RESPONSE" | jq -r '.error // "null"')
-          
-          if [ "$ERROR" = "null" ]; then
-            echo "✅ API query endpoint is working correctly (error is null)"
-          else
-            echo "❌ API query endpoint returned an error: $ERROR"
+            echo ""
+            echo "=== Testing API Query Endpoint ==="
+            RESPONSE=$(curl -s --max-time 30 -X POST "http://localhost:8000/api/data/query" \
+              -H "Content-Type: application/json" \
+              -d "{\"question\": \"Show me the top 5 products by sales\"}")
+            
+            echo "API Response (truncated): ${RESPONSE:0:200}..."
+            
+            # Check if response.error field exists and is null using Python
+            ERROR_CHECK=$(echo "$RESPONSE" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if 'error' not in data:
+        print('MISSING')
+    elif data['error'] is None:
+        print('NULL')
+    else:
+        print(f'ERROR:{data[\"error\"]}')
+except Exception as e:
+    print(f'PARSE_ERROR:{e}')
+")
+            
+            if [ "$ERROR_CHECK" = "NULL" ]; then
+              echo "✅ API query endpoint is working correctly (error field is null)"
+            elif [ "$ERROR_CHECK" = "MISSING" ]; then
+              echo "❌ API response is missing the 'error' field"
+              exit 1
+            else
+              echo "❌ API query endpoint check failed: $ERROR_CHECK"
+              exit 1
+            fi
+          ' || {
+            echo "❌ SSH connection failed or timed out"
+            echo "Attempting to get logs via alternative method..."
             exit 1
-          fi
+          }
           
           echo ""
           echo "✅ Deployment successful!"
