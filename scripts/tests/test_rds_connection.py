@@ -155,27 +155,50 @@ class RDSConnectionTester:
             return False
 
         try:
-            # Get list of tables
+            # Get all schemas
+            self.cursor.execute("""
+                SELECT schema_name
+                FROM information_schema.schemata
+                WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+                ORDER BY schema_name;
+            """)
+            schemas = [row[0] for row in self.cursor.fetchall()]
+
+            if not schemas:
+                print("⚠️  No custom schemas found")
+                return True
+
+            print(f"\n✅ Found {len(schemas)} schema(s): {', '.join(schemas)}")
+
+            # Check contiso schema specifically
             self.cursor.execute("""
                 SELECT table_name
                 FROM information_schema.tables
-                WHERE table_schema = 'public'
+                WHERE table_schema = 'contiso'
                 ORDER BY table_name;
             """)
-
             tables = [row[0] for row in self.cursor.fetchall()]
 
             if not tables:
-                print("⚠️  No tables found in database")
-                print("   Database exists but is empty")
+                print("\n⚠️  No tables found in 'contiso' schema")
                 return True
 
-            print(f"\n✅ Found {len(tables)} tables:")
-            for table in tables:
-                # Get row count for each table
-                self.cursor.execute(f"SELECT COUNT(*) FROM {table};")
-                count = self.cursor.fetchone()[0]
-                print(f"   - {table}: {count:,} rows")
+            print(f"\n✅ Found {len(tables)} tables in 'contiso' schema:")
+
+            # Show key tables with row counts
+            key_tables = ['dimcustomer', 'dimproduct', 'dimstore',
+                          'factsales', 'factonlinesales', 'factinventory']
+
+            for table in key_tables:
+                if table in tables:
+                    self.cursor.execute(f"SELECT COUNT(*) FROM contiso.{table};")
+                    count = self.cursor.fetchone()[0]
+                    print(f"   - {table}: {count:,} rows")
+
+            # Show total for other tables
+            other_count = len(tables) - len([t for t in key_tables if t in tables])
+            if other_count > 0:
+                print(f"   ... and {other_count} more tables")
 
             return True
 
@@ -194,11 +217,11 @@ class RDSConnectionTester:
             return False
 
         try:
-            # Try to query from a Contoso dimension table if it exists
+            # Try to query from contiso schema
             self.cursor.execute("""
                 SELECT table_name
                 FROM information_schema.tables
-                WHERE table_schema = 'public'
+                WHERE table_schema = 'contiso'
                 AND table_name LIKE 'dim%'
                 LIMIT 1;
             """)
@@ -207,10 +230,10 @@ class RDSConnectionTester:
 
             if result:
                 table_name = result[0]
-                print(f"Testing query on table: {table_name}")
+                print(f"Testing query on table: contiso.{table_name}")
 
                 # Get first 5 rows
-                self.cursor.execute(f"SELECT * FROM {table_name} LIMIT 5;")
+                self.cursor.execute(f"SELECT * FROM contiso.{table_name} LIMIT 5;")
                 rows = self.cursor.fetchall()
 
                 # Get column names

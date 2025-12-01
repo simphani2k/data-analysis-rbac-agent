@@ -4,11 +4,12 @@ from pydantic import BaseModel
 from typing import Optional, List
 import uvicorn
 from api.routes.groq_chat import router as groq_router
+from api.routes.data_query import router as data_query_router
 
 # Initialize FastAPI app
 app = FastAPI(
     title="AI Orchestrator API",
-    description="A FastAPI backend for AI orchestration",
+    description="A FastAPI backend for AI orchestration with data query capabilities",
     version="1.0.0"
 )
 
@@ -23,6 +24,7 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(groq_router)
+app.include_router(data_query_router)
 
 # Pydantic models
 class HealthResponse(BaseModel):
