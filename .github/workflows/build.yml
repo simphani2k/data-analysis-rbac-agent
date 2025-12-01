@@ -83,13 +83,32 @@ jobs:
       # Step 3: Sync ai-orchestrator folder to EC2
       - name: Sync AI Orchestrator files to EC2
         run: |
-          rsync -avz \
-          --exclude '.git' \
-          --exclude 'venv' \
-          --exclude '__pycache__' \
-          --exclude '.env' \
-          -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
-          ./ai-orchestrator/ ubuntu@54.183.212.95:/home/ubuntu/ai-orchestrator
+          echo "Testing SSH connection to EC2..."
+          if ssh -i ~/.ssh/id_rsa \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
+            -o BatchMode=yes \
+            ubuntu@54.183.212.95 'echo "SSH connection successful"'; then
+            echo "✓ SSH connection verified"
+          else
+            echo "ERROR: Cannot connect to EC2 instance"
+            echo "Please check:"
+            echo "  1. EC2 instance is running"
+            echo "  2. Security group allows SSH from GitHub Actions"
+            echo "  3. IP address 54.183.212.95 is correct"
+            exit 1
+          fi
+          
+          echo "Starting rsync..."
+          rsync -avz --progress \
+            --exclude '.git' \
+            --exclude 'venv' \
+            --exclude '__pycache__' \
+            --exclude '.env' \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=30" \
+            ./ai-orchestrator/ ubuntu@54.183.212.95:/home/ubuntu/ai-orchestrator
+          
+          echo "✓ Files synced successfully"
 
       # Step 4: Setup virtual environment and install dependencies
       - name: Setup and Install Dependencies
