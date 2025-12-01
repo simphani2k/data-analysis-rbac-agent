@@ -20,39 +20,56 @@ jobs:
       # Step 2: Setup SSH key
       - name: Setup SSH key
         run: |
+          set -e  # Exit on any error
+          
           # Debug: Check home directory and permissions
           echo "Home directory: $HOME"
           echo "Current user: $(whoami)"
+          echo "Listing home directory:"
           ls -la ~ || true
           
-          # Create .ssh directory with proper error handling
-          if [ -f ~/.ssh ]; then
-            echo "Error: ~/.ssh exists as a file, removing it"
-            rm -f ~/.ssh
+          # Check if .ssh exists and what type it is
+          echo "Checking for existing .ssh..."
+          if [ -e ~/.ssh ]; then
+            echo ".ssh exists, checking type:"
+            ls -ld ~/.ssh
+            if [ -f ~/.ssh ]; then
+              echo "ERROR: ~/.ssh is a file, not a directory. Removing it."
+              rm -f ~/.ssh
+            elif [ -d ~/.ssh ]; then
+              echo ".ssh directory already exists"
+            fi
+          else
+            echo ".ssh does not exist yet"
           fi
           
-          mkdir -p ~/.ssh || {
-            echo "Failed to create ~/.ssh directory"
-            echo "Checking if .ssh exists and its type:"
-            ls -ld ~/.ssh 2>&1 || echo ".ssh does not exist"
-            exit 1
-          }
+          # Create .ssh directory
+          echo "Creating .ssh directory..."
+          mkdir -p ~/.ssh
+          echo "✓ .ssh directory created/verified"
           
           # Set proper permissions on .ssh directory
+          echo "Setting permissions on .ssh directory..."
           chmod 700 ~/.ssh
+          echo "✓ Permissions set"
           
           # Create SSH key file
+          echo "Creating SSH key file..."
           echo "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          echo "✓ SSH key created"
           
           # Add host to known_hosts
+          echo "Adding host to known_hosts..."
           ssh-keyscan -H 54.183.212.95 >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
+          echo "✓ Host added to known_hosts"
           
           # Verify key format
-          echo "Checking SSH key format..."
+          echo "Verifying SSH key format..."
           head -n 1 ~/.ssh/id_rsa
           tail -n 1 ~/.ssh/id_rsa
+          echo "✓ SSH setup complete"
 
       # Step 3: Sync ai-orchestrator folder to EC2
       - name: Sync AI Orchestrator files to EC2
