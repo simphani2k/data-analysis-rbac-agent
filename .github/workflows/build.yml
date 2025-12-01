@@ -41,17 +41,24 @@ jobs:
           -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
           ./ai-orchestrator/ ubuntu@3.80.111.127:/home/ubuntu/ai-orchestrator
 
-      # Step 4: Install dependencies & restart systemd service
-      - name: Restart AI Orchestrator service
+      # Step 4: Setup virtual environment and install dependencies
+      - name: Setup and Install Dependencies
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@3.80.111.127 '
             set -e
             cd /home/ubuntu/ai-orchestrator
 
+            # Create virtual environment if it does not exist
+            if [ ! -d "venv" ]; then
+              echo "Creating virtual environment..."
+              python3 -m venv venv
+            fi
+
             echo "Activating virtual environment..."
             source venv/bin/activate
 
             echo "Installing dependencies..."
+            pip install --upgrade pip
             pip install --upgrade -r requirements.txt --no-input
 
             echo "Restarting service..."
