@@ -1,96 +1,96 @@
-name: Deploy AI Orchestrator to EC2
+# name: Deploy AI Orchestrator to EC2
 
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'ai-orchestrator/**'
-  pull_request:
-    branches:
-      - main
-    types: [closed]
-    paths:
-      - 'ai-orchestrator/**'
-  workflow_dispatch:
+# on:
+#   push:
+#     branches:
+#       - main
+#     paths:
+#       - 'ai-orchestrator/**'
+#   pull_request:
+#     branches:
+#       - main
+#     types: [closed]
+#     paths:
+#       - 'ai-orchestrator/**'
+#   workflow_dispatch:
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    # Only run on merged PRs or direct pushes to main
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     # Only run on merged PRs or direct pushes to main
+#     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
 
-    steps:
-      # Step 1: Checkout repository
-      - name: Checkout repository
-        uses: actions/checkout@v4
+#     steps:
+#       # Step 1: Checkout repository
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      # Step 2: Setup SSH agent (for connecting to EC2)
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+#       # Step 2: Setup SSH agent (for connecting to EC2)
+#       - name: Setup SSH agent
+#         uses: webfactory/ssh-agent@v0.9.0
+#         with:
+#           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      # Step 3: Copy ai-orchestrator code to EC2 using rsync over SSH
-      - name: Sync ai-orchestrator files to EC2
-        run: |
-          rsync -avz --exclude '.git' --exclude 'venv' --exclude '__pycache__' --exclude '.env' \
-          -e "ssh -o StrictHostKeyChecking=no" \
-          ./ai-orchestrator/ ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/ai-orchestrator
+#       # Step 3: Copy ai-orchestrator code to EC2 using rsync over SSH
+#       - name: Sync ai-orchestrator files to EC2
+#         run: |
+#           rsync -avz --exclude '.git' --exclude 'venv' --exclude '__pycache__' --exclude '.env' \
+#           -e "ssh -o StrictHostKeyChecking=no" \
+#           ./ai-orchestrator/ ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/ai-orchestrator
 
-      # Step 4: Install dependencies and restart service on EC2
-      - name: Deploy and restart AI Orchestrator service
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} '
-            set -e
-            cd /home/ubuntu/ai-orchestrator
+#       # Step 4: Install dependencies and restart service on EC2
+#       - name: Deploy and restart AI Orchestrator service
+#         run: |
+#           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} '
+#             set -e
+#             cd /home/ubuntu/ai-orchestrator
             
-            echo "📦 Installing dependencies..."
-            # Create virtual environment if it doesn't exist
-            if [ ! -d "venv" ]; then
-              echo "Creating virtual environment..."
-              python3 -m venv venv
-            fi
+#             echo "📦 Installing dependencies..."
+#             # Create virtual environment if it doesn't exist
+#             if [ ! -d "venv" ]; then
+#               echo "Creating virtual environment..."
+#               python3 -m venv venv
+#             fi
             
-            # Activate virtual environment and install dependencies
-            source venv/bin/activate
-            pip install --upgrade pip
-            pip install -r requirements.txt --no-input
+#             # Activate virtual environment and install dependencies
+#             source venv/bin/activate
+#             pip install --upgrade pip
+#             pip install -r requirements.txt --no-input
             
-            echo "🔄 Restarting AI Orchestrator service..."
-            # Restart the service
-            sudo systemctl restart ai-orchestrator
+#             echo "🔄 Restarting AI Orchestrator service..."
+#             # Restart the service
+#             sudo systemctl restart ai-orchestrator
             
-            # Wait a moment for service to start
-            sleep 3
+#             # Wait a moment for service to start
+#             sleep 3
             
-            # Check service status
-            if sudo systemctl is-active --quiet ai-orchestrator; then
-              echo "✅ AI Orchestrator service is running"
-              sudo systemctl status ai-orchestrator --no-pager
-            else
-              echo "❌ AI Orchestrator service failed to start"
-              sudo journalctl -u ai-orchestrator -n 50 --no-pager
-              exit 1
-            fi
-          '
+#             # Check service status
+#             if sudo systemctl is-active --quiet ai-orchestrator; then
+#               echo "✅ AI Orchestrator service is running"
+#               sudo systemctl status ai-orchestrator --no-pager
+#             else
+#               echo "❌ AI Orchestrator service failed to start"
+#               sudo journalctl -u ai-orchestrator -n 50 --no-pager
+#               exit 1
+#             fi
+#           '
       
-      # Step 5: Verify deployment with health check
-      - name: Verify deployment
-        run: |
-          echo "🔍 Checking API health..."
-          sleep 2
+#       # Step 5: Verify deployment with health check
+#       - name: Verify deployment
+#         run: |
+#           echo "🔍 Checking API health..."
+#           sleep 2
           
-          # Try health check up to 3 times
-          for i in {1..3}; do
-            if curl -f -s http://${{ secrets.EC2_HOST }}:8000/health; then
-              echo ""
-              echo "✅ Deployment successful! API is healthy."
-              exit 0
-            fi
-            echo "Attempt $i failed, retrying..."
-            sleep 3
-          done
+#           # Try health check up to 3 times
+#           for i in {1..3}; do
+#             if curl -f -s http://${{ secrets.EC2_HOST }}:8000/health; then
+#               echo ""
+#               echo "✅ Deployment successful! API is healthy."
+#               exit 0
+#             fi
+#             echo "Attempt $i failed, retrying..."
+#             sleep 3
+#           done
           
-          echo "❌ Health check failed after 3 attempts"
-          exit 1
+#           echo "❌ Health check failed after 3 attempts"
+#           exit 1
