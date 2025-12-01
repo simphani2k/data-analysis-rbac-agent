@@ -177,6 +177,24 @@ jobs:
           '
           
           echo ""
+          echo "=== Testing API Query Endpoint ==="
+          RESPONSE=$(curl -s -X POST "http://54.183.212.95:8000/api/data/query" \
+            -H "Content-Type: application/json" \
+            -d '{"question": "Show me the top 5 products by sales"}')
+          
+          echo "API Response: $RESPONSE"
+          
+          # Check if response.error is null
+          ERROR=$(echo "$RESPONSE" | jq -r '.error // "null"')
+          
+          if [ "$ERROR" = "null" ]; then
+            echo "✅ API query endpoint is working correctly (error is null)"
+          else
+            echo "❌ API query endpoint returned an error: $ERROR"
+            exit 1
+          fi
+          
+          echo ""
           echo "✅ Deployment successful!"
           echo ""
           echo "⚠️  NOTE: External health check from GitHub Actions is skipped because:"
