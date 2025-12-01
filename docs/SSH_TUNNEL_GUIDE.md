@@ -9,7 +9,7 @@ chmod 400 ai-orchestrator-key-pair.pem
 
 ### 2. Connect to EC2
 ```bash
-ssh -i ai-orchestrator-key-pair.pem ubuntu@3.80.111.127
+ssh -i ai-orchestrator-key-pair.pem ubuntu@54.183.212.95
 ```
 
 ## View EC2 Logs
@@ -60,7 +60,7 @@ sudo systemctl start ai-orchestrator
 
 ```bash
 # Connect to EC2
-ssh -i ai-orchestrator-key-pair.pem ubuntu@3.80.111.127
+ssh -i ai-orchestrator-key-pair.pem ubuntu@54.183.212.95
 
 # View live logs
 sudo journalctl -u ai-orchestrator -f
@@ -82,4 +82,4 @@ chmod 400 ai-orchestrator-key-pair.pem
 
 ### Host Key Verification Failed
 ```bash
-ssh-keygen -R 3.80.111.127
+ssh-keygen -R 54.183.212.95

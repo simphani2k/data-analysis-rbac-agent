@@ -5,7 +5,7 @@ export interface CoreMessage {
   content: string;
 }
 
-const GROQ_API_URL = process.env.GROQ_API_URL || 'http://3.80.111.127:8000';
+const GROQ_API_URL = process.env.GROQ_API_URL || 'http://54.183.212.95:8000';
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 /**
