@@ -186,12 +186,12 @@ jobs:
               -H "Content-Type: application/json" \
               -d "{\"question\": \"Show me the top 5 products by sales\"}")
             
-            echo "API Response: $RESPONSE"
+            echo "API Response (truncated): ${RESPONSE:0:200}..."
             
-            # Check if response.error is null
-            ERROR=$(echo "$RESPONSE" | jq -r ".error // \"null\"")
+            # Check if response.error is null using Python
+            ERROR=$(echo "$RESPONSE" | python3 -c "import sys, json; data = json.load(sys.stdin); print(data.get(\"error\", \"null\"))")
             
-            if [ "$ERROR" = "null" ]; then
+            if [ "$ERROR" = "null" ] || [ "$ERROR" = "None" ]; then
               echo "✅ API query endpoint is working correctly (error is null)"
             else
               echo "❌ API query endpoint returned an error: $ERROR"
