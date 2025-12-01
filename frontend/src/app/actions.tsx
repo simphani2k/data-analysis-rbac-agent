@@ -48,21 +48,13 @@ export async function continueTextConversation(messages: CoreMessage[]): Promise
  */
 export async function checkAIAvailability(): Promise<boolean> {
   try {
-    console.log('[AI Availability Check] Attempting to connect to:', GROQ_API_URL);
-    
     const response = await fetch(`${GROQ_API_URL}/health`, {
       method: 'GET',
       cache: 'no-store',
-      signal: AbortSignal.timeout(5000), // 5 second timeout
     });
-    
-    console.log('[AI Availability Check] Response status:', response.status);
     return response.ok;
   } catch (error) {
-    console.error('[AI Availability Check] Failed to connect:', {
-      url: GROQ_API_URL,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    console.error('Error checking Groq API availability:', error);
     return false;
   }
 }
