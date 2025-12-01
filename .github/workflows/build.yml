@@ -21,9 +21,14 @@ jobs:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH2_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H 3.80.111.127 >> ~/.ssh/known_hosts
+          
+          # Verify key format
+          echo "Checking SSH key format..."
+          head -n 1 ~/.ssh/id_rsa
+          tail -n 1 ~/.ssh/id_rsa
 
       # Step 3: Sync ai-orchestrator folder to EC2
       - name: Sync AI Orchestrator files to EC2
