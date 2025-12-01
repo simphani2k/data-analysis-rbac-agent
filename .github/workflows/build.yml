@@ -180,29 +180,28 @@ jobs:
             echo ""
             echo "=== Recent Logs ==="
             sudo journalctl -u ai-orchestrator -n 20 --no-pager
+            echo ""
+            echo "=== Testing API Query Endpoint ==="
+            RESPONSE=$(curl -s --max-time 30 -X POST "http://localhost:8000/api/data/query" \
+              -H "Content-Type: application/json" \
+              -d "{\"question\": \"Show me the top 5 products by sales\"}")
+            
+            echo "API Response: $RESPONSE"
+            
+            # Check if response.error is null
+            ERROR=$(echo "$RESPONSE" | jq -r ".error // \"null\"")
+            
+            if [ "$ERROR" = "null" ]; then
+              echo "✅ API query endpoint is working correctly (error is null)"
+            else
+              echo "❌ API query endpoint returned an error: $ERROR"
+              exit 1
+            fi
           ' || {
             echo "❌ SSH connection failed or timed out"
             echo "Attempting to get logs via alternative method..."
             exit 1
           }
-          
-          echo ""
-          echo "=== Testing API Query Endpoint ==="
-          RESPONSE=$(curl -s --max-time 30 -X POST "http://54.183.212.95:8000/api/data/query" \
-            -H "Content-Type: application/json" \
-            -d '{"question": "Show me the top 5 products by sales"}')
-          
-          echo "API Response: $RESPONSE"
-          
-          # Check if response.error is null
-          ERROR=$(echo "$RESPONSE" | jq -r '.error // "null"')
-          
-          if [ "$ERROR" = "null" ]; then
-            echo "✅ API query endpoint is working correctly (error is null)"
-          else
-            echo "❌ API query endpoint returned an error: $ERROR"
-            exit 1
-          fi
           
           echo ""
           echo "✅ Deployment successful!"
