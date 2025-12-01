@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from services.ai_query_service import AIQueryService
+import logging
 
 router = APIRouter(prefix="/api/data", tags=["data-query"])
 
@@ -31,18 +32,10 @@ class DataQueryResponse(BaseModel):
 
 @router.post("/query", response_model=DataQueryResponse)
 async def query_data(request: DataQueryRequest):
-    """
-    Query the database using natural language.
-
-    Args:
-        request: DataQueryRequest with user's question
-
-    Returns:
-        DataQueryResponse with answer and results
-    """
     try:
         ai_service = AIQueryService()
         result = ai_service.answer_question(request.question)
+        logging.info(f"SQL: {result.get('sql')}, Error: {result.get('error')}")
 
         if not result['success']:
             return DataQueryResponse(
@@ -62,6 +55,7 @@ async def query_data(request: DataQueryRequest):
         )
 
     except Exception as e:
+        logging.exception("Unhandled exception")
         raise HTTPException(status_code=500, detail=str(e))
 
 
