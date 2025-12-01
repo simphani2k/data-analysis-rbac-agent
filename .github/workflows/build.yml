@@ -140,17 +140,37 @@ jobs:
           echo "Waiting for service to start..."
           sleep 10
           
-          echo "Checking service health..."
+          echo "Checking service status on EC2..."
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@54.183.212.95 '
+            echo "=== Service Status ==="
+            sudo systemctl status ai-orchestrator --no-pager || true
+            echo ""
+            echo "=== Recent Logs ==="
+            sudo journalctl -u ai-orchestrator -n 50 --no-pager || true
+            echo ""
+            echo "=== Checking if port 8000 is listening ==="
+            sudo netstat -tlnp | grep 8000 || echo "Port 8000 is not listening"
+          '
+          
+          echo ""
+          echo "Checking service health from GitHub Actions..."
           for i in {1..5}; do
-            if curl -f http://54.183.212.95:8000/health; then
+            echo "Attempt $i of 5..."
+            if curl -f --max-time 10 --connect-timeout 5 http://54.183.212.95:8000/health 2>&1; then
               echo "✅ Service is healthy!"
               exit 0
             fi
-            echo "Attempt $i failed, retrying in 5 seconds..."
+            echo "Health check failed, retrying in 5 seconds..."
             sleep 5
           done
           
+          echo ""
           echo "❌ Service health check failed after 5 attempts"
-          echo "Checking service status on EC2..."
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@54.183.212.95 'sudo systemctl status ai-orchestrator'
+          echo "This could mean:"
+          echo "  1. Service failed to start (check logs above)"
+          echo "  2. Service is not listening on port 8000"
+          echo "  3. Security group doesn't allow HTTP traffic on port 8000 from GitHub Actions"
+          echo ""
+          echo "Checking final service status..."
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@54.183.212.95 'sudo systemctl status ai-orchestrator --no-pager'
           exit 1
