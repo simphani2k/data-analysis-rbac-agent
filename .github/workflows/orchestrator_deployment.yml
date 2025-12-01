@@ -189,7 +189,7 @@ jobs:
             echo "API Response (truncated): ${RESPONSE:0:200}..."
             
             # Check if response.error field is null using Python
-            ERROR_VALUE=$(echo "$RESPONSE" | python3 -c "import sys, json; data = json.load(sys.stdin); print(str(data.get('error', 'MISSING')))")
+            ERROR_VALUE=$(echo "$RESPONSE" | python3 -c "import sys, json; data = json.load(sys.stdin); print(str(data.get(\"error\", \"MISSING\")))")
             
             if [ "$ERROR_VALUE" = "None" ]; then
               echo "✅ API query endpoint is working correctly (error field is null)"
