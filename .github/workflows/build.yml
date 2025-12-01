@@ -17,11 +17,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Setup SSH agent
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH2_KEY }}
+      # Step 2: Setup SSH key
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH2_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 3.80.111.127 >> ~/.ssh/known_hosts
 
       # Step 3: Sync ai-orchestrator folder to EC2
       - name: Sync AI Orchestrator files to EC2
@@ -31,13 +33,13 @@ jobs:
           --exclude 'venv' \
           --exclude '__pycache__' \
           --exclude '.env' \
-          -e "ssh -o StrictHostKeyChecking=no" \
+          -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
           ./ai-orchestrator/ ubuntu@3.80.111.127:/home/ubuntu/ai-orchestrator
 
       # Step 4: Install dependencies & restart systemd service
       - name: Restart AI Orchestrator service
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@3.80.111.127 '
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@3.80.111.127 '
             set -e
             cd /home/ubuntu/ai-orchestrator
 
