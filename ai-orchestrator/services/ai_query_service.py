@@ -149,7 +149,7 @@ Return a JSON object with:
 
     def format_answer(self, question: str, data: List[Dict], row_count: int, explanation: str) -> str:
         """
-        Format query results into a natural language answer.
+        Format query results into a markdown table.
 
         Args:
             question: Original question
@@ -158,41 +158,61 @@ Return a JSON object with:
             explanation: SQL explanation
 
         Returns:
-            Formatted answer string
+            Formatted answer string with markdown table
         """
         if row_count == 0:
             return "No data found matching your query."
 
-        # Create a simple formatted response
-        answer_parts = [explanation]
+        # Start with explanation
+        answer_parts = [explanation, "\n\n"]
 
-        if row_count <= 20:
-            # Show all results if small dataset
-            answer_parts.append(f"\n\nFound {row_count} result(s):\n")
-            for i, row in enumerate(data, 1):
-                answer_parts.append(f"\n{i}. {self._format_row(row)}")
-        else:
-            # Show first 10 for larger datasets
-            answer_parts.append(f"\n\nFound {row_count} results. Showing first 10:\n")
-            for i, row in enumerate(data[:10], 1):
-                answer_parts.append(f"\n{i}. {self._format_row(row)}")
-            answer_parts.append(f"\n\n... and {row_count - 10} more results.")
+        # Determine how many rows to show
+        display_limit = min(row_count, 20)
+        display_data = data[:display_limit]
+
+        # Get column names from first row
+        if display_data:
+            columns = list(display_data[0].keys())
+
+            # Create markdown table header
+            answer_parts.append("| " + " | ".join(columns) + " |\n")
+            answer_parts.append("|" + "|".join(["---" for _ in columns]) + "|\n")
+
+            # Add rows
+            for row in display_data:
+                formatted_values = []
+                for col in columns:
+                    value = row.get(col)
+                    formatted_values.append(self._format_value(value))
+                answer_parts.append("| " + " | ".join(formatted_values) + " |\n")
+
+            # Add footer if there are more results
+            if row_count > display_limit:
+                answer_parts.append(f"\n*Showing {display_limit} of {row_count:,} total results*")
+            else:
+                answer_parts.append(f"\n*Total: {row_count:,} results*")
 
         return "".join(answer_parts)
 
-    def _format_row(self, row: Dict) -> str:
-        """Format a single row for display."""
-        formatted = []
-        for key, value in row.items():
-            if value is not None:
-                # Format numbers nicely
-                if isinstance(value, (int, float)):
-                    if isinstance(value, float) and value > 100:
-                        formatted.append(f"{key}: {value:,.2f}")
-                    elif isinstance(value, int) and value > 1000:
-                        formatted.append(f"{key}: {value:,}")
-                    else:
-                        formatted.append(f"{key}: {value}")
-                else:
-                    formatted.append(f"{key}: {value}")
-        return " | ".join(formatted)
+    def _format_value(self, value) -> str:
+        """Format a single value for display in table."""
+        if value is None:
+            return "-"
+
+        # Format numbers with proper separators
+        if isinstance(value, float):
+            if value > 1000 or value < -1000:
+                return f"{value:,.2f}"
+            else:
+                return f"{value:.2f}"
+        elif isinstance(value, int):
+            if value > 1000 or value < -1000:
+                return f"{value:,}"
+            else:
+                return str(value)
+        else:
+            # Truncate long strings
+            str_value = str(value)
+            if len(str_value) > 50:
+                return str_value[:47] + "..."
+            return str_value

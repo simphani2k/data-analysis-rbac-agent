@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { IconArrowUp } from '@/components/ui/icons';
 import AboutCard from "@/components/cards/aboutcard";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 export const maxDuration = 30;
 
 // Typing indicator component
@@ -116,9 +118,17 @@ export default function Chat() {
                   ? 'bg-blue-500 text-white ml-auto'
                   : 'bg-gray-100 text-gray-900'
                 } px-4 py-3 rounded-2xl max-w-[80%] shadow-sm`}>
-                <div className="whitespace-pre-wrap break-words">
-                  {message.content as string}
-                </div>
+                {message.role === 'assistant' ? (
+                  <div className="prose prose-sm max-w-none prose-table:text-xs">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.content as string}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <div className="whitespace-pre-wrap break-words">
+                    {message.content as string}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -127,8 +137,10 @@ export default function Chat() {
           {streamingMessage && (
             <div className="mb-6 flex">
               <div className="bg-gray-100 text-gray-900 px-4 py-3 rounded-2xl max-w-[80%] shadow-sm">
-                <div className="whitespace-pre-wrap break-words">
-                  {streamingMessage}
+                <div className="prose prose-sm max-w-none prose-table:text-xs">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {streamingMessage}
+                  </ReactMarkdown>
                   <span className="inline-block w-1 h-4 bg-gray-900 ml-1 animate-pulse" />
                 </div>
               </div>
