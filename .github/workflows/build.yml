@@ -48,7 +48,7 @@ jobs:
       # Step 5: Install dependencies and restart service
       - name: Setup environment and restart service
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@54.183.212.95 '
+          ssh -o StrictHostKeyChecking=no ubuntu@54.183.212.95 "
             set -e
             cd $DEPLOY_FOLDER
 
@@ -62,7 +62,7 @@ jobs:
             pip install --upgrade -r requirements.txt --no-input
 
             sudo systemctl restart $SERVICE_NAME
-          '
+          "
 
       # Step 6: Health check
       - name: Health check
