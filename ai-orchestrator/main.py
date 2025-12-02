@@ -6,6 +6,7 @@ import uvicorn
 from api.routes.groq_chat import router as groq_router
 from api.routes.data_query import router as data_query_router
 from dotenv import load_dotenv
+import os
 
 # Load environment variables
 load_dotenv()
@@ -103,4 +104,9 @@ async def delete_item(item_id: int):
     raise HTTPException(status_code=404, detail="Item not found")
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8000)),
+        reload=True
+    )
