@@ -5,7 +5,11 @@ export interface CoreMessage {
   content: string;
 }
 
-const BACKEND_API_URL = process.env.GROQ_API_URL || 'http://54.183.212.95:8000';
+const BACKEND_API_URL = process.env.BACKEND_API_URL;
+
+if (!BACKEND_API_URL) {
+  throw new Error('BACKEND_API_URL environment variable is not set');
+}
 
 /**
  * Query the database using natural language
