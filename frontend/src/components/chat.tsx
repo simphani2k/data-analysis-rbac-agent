@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { IconArrowUp } from '@/components/ui/icons';
 import AboutCard from "@/components/cards/aboutcard";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 export const maxDuration = 30;
 
 // Typing indicator component
@@ -27,6 +29,7 @@ export default function Chat() {
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -51,6 +54,15 @@ export default function Chat() {
     return response;
   };
 
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsLoading(false);
+      setStreamingMessage('');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -66,6 +78,9 @@ export default function Chat() {
     setIsLoading(true);
     setStreamingMessage('');
 
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController();
+
     try {
       const response = await continueTextConversation(newMessages);
 
@@ -80,19 +95,32 @@ export default function Chat() {
         },
       ]);
       setStreamingMessage('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error);
-      const errorMessage = 'Sorry, I encountered an error. Please try again.';
-      setMessages([
-        ...newMessages,
-        {
-          role: 'assistant',
-          content: errorMessage,
-        },
-      ]);
+
+      // Don't show error if user aborted
+      if (error.name === 'AbortError') {
+        setMessages([
+          ...newMessages,
+          {
+            role: 'assistant',
+            content: 'Query stopped by user.',
+          },
+        ]);
+      } else {
+        const errorMessage = 'Sorry, I encountered an error. Please try again.';
+        setMessages([
+          ...newMessages,
+          {
+            role: 'assistant',
+            content: errorMessage,
+          },
+        ]);
+      }
       setStreamingMessage('');
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -116,9 +144,17 @@ export default function Chat() {
                   ? 'bg-blue-500 text-white ml-auto'
                   : 'bg-gray-100 text-gray-900'
                 } px-4 py-3 rounded-2xl max-w-[80%] shadow-sm`}>
-                <div className="whitespace-pre-wrap break-words">
-                  {message.content as string}
-                </div>
+                {message.role === 'assistant' ? (
+                  <div className="prose prose-sm max-w-none prose-table:text-xs">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.content as string}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <div className="whitespace-pre-wrap break-words">
+                    {message.content as string}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -127,8 +163,10 @@ export default function Chat() {
           {streamingMessage && (
             <div className="mb-6 flex">
               <div className="bg-gray-100 text-gray-900 px-4 py-3 rounded-2xl max-w-[80%] shadow-sm">
-                <div className="whitespace-pre-wrap break-words">
-                  {streamingMessage}
+                <div className="prose prose-sm max-w-none prose-table:text-xs">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {streamingMessage}
+                  </ReactMarkdown>
                   <span className="inline-block w-1 h-4 bg-gray-900 ml-1 animate-pulse" />
                 </div>
               </div>
@@ -161,13 +199,26 @@ export default function Chat() {
                   placeholder="Ask me anything..."
                   disabled={isLoading}
                 />
-                <Button
-                  type="submit"
-                  disabled={!input.trim() || isLoading}
-                  className="rounded-full h-10 w-10 p-0"
-                >
-                  <IconArrowUp />
-                </Button>
+                {isLoading ? (
+                  <Button
+                    type="button"
+                    onClick={handleStop}
+                    variant="destructive"
+                    className="rounded-full h-10 w-10 p-0"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                      <rect x="6" y="6" width="12" height="12" rx="2" />
+                    </svg>
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={!input.trim()}
+                    className="rounded-full h-10 w-10 p-0"
+                  >
+                    <IconArrowUp />
+                  </Button>
+                )}
               </div>
             </form>
           </Card>
