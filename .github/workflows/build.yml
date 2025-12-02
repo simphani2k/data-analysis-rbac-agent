@@ -1,0 +1,78 @@
+name: Deploy AI Orchestrator to EC2
+
+on:
+  push:
+    branches:
+      - main   # Prod deploy
+      - dev    # Dev deploy
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set deployment variables based on branch
+      - name: Set deployment variables
+        run: |
+          if [ "${GITHUB_REF##*/}" = "main" ]; then
+            echo "DEPLOY_FOLDER=/home/ubuntu/data-analysis-rbac-agent/ai-orchestrator" >> $GITHUB_ENV
+            echo "SERVICE_NAME=ai-orchestrator" >> $GITHUB_ENV
+            echo "PORT=8000" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF##*/}" = "dev" ]; then
+            echo "DEPLOY_FOLDER=/home/ubuntu/ai-orchestrator-dev" >> $GITHUB_ENV
+            echo "SERVICE_NAME=ai-orchestrator-dev" >> $GITHUB_ENV
+            echo "PORT=9000" >> $GITHUB_ENV
+          fi
+
+      # Step 3: Setup SSH agent
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH2_KEY }}
+
+      # Step 4: Sync code to EC2
+      - name: Sync files to EC2
+        run: |
+          rsync -avz --exclude '.git' \
+              --exclude 'venv' \
+              --exclude '__pycache__' \
+              --exclude '.env*' \
+              -e "ssh -o StrictHostKeyChecking=no" \
+              ./ai-orchestrator/ ubuntu@54.183.212.95:$DEPLOY_FOLDER
+
+      # Step 5: Install dependencies and restart service
+      - name: Setup environment and restart service
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@54.183.212.95 '
+            set -e
+            cd $DEPLOY_FOLDER
+
+            # Create virtual environment if missing
+            if [ ! -d "venv" ]; then
+              python3 -m venv venv
+            fi
+
+            source venv/bin/activate
+            pip install --upgrade pip
+            pip install --upgrade -r requirements.txt --no-input
+
+            sudo systemctl restart $SERVICE_NAME
+          '
+
+      # Step 6: Health check
+      - name: Health check
+        run: |
+          echo "Waiting for FastAPI to start..."
+          sleep 10
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://13.233.212.132:$PORT/health)
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Health check failed with status $STATUS"
+            exit 1
+          else
+            echo "Health check passed!"
+          fi
