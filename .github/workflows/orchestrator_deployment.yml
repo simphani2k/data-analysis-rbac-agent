@@ -135,10 +135,6 @@ jobs:
             find . -name "*.pyc" -delete 2>/dev/null || true
             echo "✓ Cache cleared"
 
-            echo "Stopping any running processes..."
-            sudo pkill -f "uvicorn" || true
-            sleep 2
-
             echo "Restarting service..."
             sudo systemctl restart ai-orchestrator
           '
