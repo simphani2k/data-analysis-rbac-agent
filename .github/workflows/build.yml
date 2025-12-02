@@ -69,7 +69,7 @@ jobs:
         run: |
           echo "Waiting for FastAPI to start..."
           sleep 10
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://13.233.212.132:$PORT/health)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://54.183.212.95:$PORT/health)
           if [ "$STATUS" -ne 200 ]; then
             echo "Health check failed with status $STATUS"
             exit 1
