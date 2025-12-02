@@ -5,6 +5,13 @@ from typing import Optional, List
 import uvicorn
 from api.routes.groq_chat import router as groq_router
 from api.routes.data_query import router as data_query_router
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+APP_ENV = os.getenv("APP_ENV", "dev")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Initialize FastAPI app
 app = FastAPI(
