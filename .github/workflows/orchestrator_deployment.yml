@@ -130,13 +130,18 @@ jobs:
             pip install --upgrade pip
             pip install --upgrade -r requirements.txt --no-input
 
+            echo "Stopping service..."
+            sudo systemctl stop ai-orchestrator
+            echo "✓ Service stopped"
+
             echo "Clearing Python cache..."
             find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
             find . -name "*.pyc" -delete 2>/dev/null || true
             echo "✓ Cache cleared"
 
-            echo "Restarting service..."
-            sudo systemctl restart ai-orchestrator
+            echo "Starting service..."
+            sudo systemctl start ai-orchestrator
+            echo "✓ Service started"
           '
 
       # Step 5: Health Check
