@@ -30,6 +30,7 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const streamingMessageRef = useRef<string>('');
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function Chat() {
   // Simulate streaming effect by displaying response character by character
   const streamResponse = async (response: string) => {
     setStreamingMessage('');
+    streamingMessageRef.current = '';
     const words = response.split(' ');
 
     for (let i = 0; i < words.length; i++) {
@@ -52,7 +54,9 @@ export default function Chat() {
         return null; // Streaming was stopped
       }
       await new Promise(resolve => setTimeout(resolve, 50));
-      setStreamingMessage(prev => prev + (i > 0 ? ' ' : '') + words[i]);
+      const newMessage = streamingMessageRef.current + (i > 0 ? ' ' : '') + words[i];
+      streamingMessageRef.current = newMessage;
+      setStreamingMessage(newMessage);
     }
 
     return response;
@@ -63,7 +67,7 @@ export default function Chat() {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
       setIsLoading(false);
-      setStreamingMessage('');
+      // Don't clear streamingMessage here - let the main flow save it first
     }
   };
 
@@ -93,15 +97,16 @@ export default function Chat() {
 
       // Check if streaming was stopped by user
       if (streamResult === null) {
-        // Save the partial streamed message
+        // Save the partial streamed message using ref to get current value
         setMessages([
           ...newMessages,
           {
             role: 'assistant',
-            content: streamingMessage,
+            content: streamingMessageRef.current,
           },
         ]);
         setStreamingMessage('');
+        streamingMessageRef.current = '';
       } else {
         setMessages([
           ...newMessages,
@@ -111,6 +116,7 @@ export default function Chat() {
           },
         ]);
         setStreamingMessage('');
+        streamingMessageRef.current = '';
       }
     } catch (error: any) {
       console.error('Error:', error);
@@ -123,6 +129,7 @@ export default function Chat() {
         },
       ]);
       setStreamingMessage('');
+      streamingMessageRef.current = '';
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
