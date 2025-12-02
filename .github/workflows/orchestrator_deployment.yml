@@ -194,15 +194,19 @@ jobs:
             echo "=== Testing API Query Endpoint ==="
             RESPONSE=$(curl -s --max-time 30 -X POST "http://localhost:8000/api/data/query" \
               -H "Content-Type: application/json" \
-              -d "{\"question\": \"Show me the top 5 products by sales\"}")
-            
-            echo "API Response (truncated): ${RESPONSE:0:200}..."
-            
+              -d "{\"question\": \"Show me 3 product categories\"}")
+
             # Check if response.error field is null using Python
             ERROR_VALUE=$(echo "$RESPONSE" | python3 -c "import sys, json; data = json.load(sys.stdin); print(str(data.get(\"error\", \"MISSING\")))")
-            
+
             if [ "$ERROR_VALUE" = "None" ]; then
               echo "✅ API query endpoint is working correctly (error field is null)"
+
+              # Extract and display the answer field to verify formatting
+              echo ""
+              echo "=== API Response Answer Field ==="
+              echo "$RESPONSE" | python3 -c "import sys, json; data = json.load(sys.stdin); print(data.get('answer', 'NO ANSWER'))"
+              echo "=== End Answer Field ==="
             else
               echo "❌ API query endpoint check failed: error field value is '$ERROR_VALUE'"
               exit 1
