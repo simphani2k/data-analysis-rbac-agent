@@ -93,7 +93,14 @@ export default function Chat() {
 
       // Check if streaming was stopped by user
       if (streamResult === null) {
-        // Just clear streaming message, don't add any assistant message
+        // Save the partial streamed message
+        setMessages([
+          ...newMessages,
+          {
+            role: 'assistant',
+            content: streamingMessage,
+          },
+        ]);
         setStreamingMessage('');
       } else {
         setMessages([
