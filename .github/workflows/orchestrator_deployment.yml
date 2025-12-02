@@ -205,7 +205,7 @@ jobs:
               # Extract and display the answer field to verify formatting
               echo ""
               echo "=== API Response Answer Field ==="
-              echo "$RESPONSE" | python3 -c "import sys, json; data = json.load(sys.stdin); print(data.get('answer', 'NO ANSWER'))"
+              echo "$RESPONSE" | python3 -c 'import sys, json; data = json.load(sys.stdin); print(data.get("answer", "NO ANSWER"))'
               echo "=== End Answer Field ==="
             else
               echo "❌ API query endpoint check failed: error field value is '$ERROR_VALUE'"
