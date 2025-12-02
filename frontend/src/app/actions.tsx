@@ -5,10 +5,10 @@ export interface CoreMessage {
   content: string;
 }
 
-const BACKEND_API_URL = process.env.BACKEND_API_URL;
+const GROQ_API_URL = process.env.GROQ_API_URL;
 
-if (!BACKEND_API_URL) {
-  throw new Error('BACKEND_API_URL environment variable is not set');
+if (!GROQ_API_URL) {
+  throw new Error('GROQ_API_URL environment variable is not set');
 }
 
 /**
@@ -20,7 +20,7 @@ export async function continueTextConversation(messages: CoreMessage[]): Promise
   try {
     const userQuestion = messages[messages.length - 1].content;
 
-    const response = await fetch(`${BACKEND_API_URL}/api/data/query`, {
+    const response = await fetch(`${GROQ_API_URL}/api/data/query`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -56,7 +56,7 @@ export async function continueTextConversation(messages: CoreMessage[]): Promise
  */
 export async function checkAIAvailability(): Promise<boolean> {
   try {
-    const response = await fetch(`${BACKEND_API_URL}/health`, {
+    const response = await fetch(`${GROQ_API_URL}/health`, {
       method: 'GET',
       cache: 'no-store',
     });
