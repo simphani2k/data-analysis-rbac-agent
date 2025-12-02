@@ -1,4 +1,4 @@
-name: Deploy AI Orchestrator to EC2
+name: Deploy AI Orchestrator to EC2 - prod and dev
 
 on:
   push:
