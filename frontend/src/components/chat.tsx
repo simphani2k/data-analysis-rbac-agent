@@ -93,13 +93,8 @@ export default function Chat() {
 
       // Check if streaming was stopped by user
       if (streamResult === null) {
-        setMessages([
-          ...newMessages,
-          {
-            role: 'assistant',
-            content: 'Query stopped by user.',
-          },
-        ]);
+        // Just clear streaming message, don't add any assistant message
+        setStreamingMessage('');
       } else {
         setMessages([
           ...newMessages,
@@ -108,8 +103,8 @@ export default function Chat() {
             content: response,
           },
         ]);
+        setStreamingMessage('');
       }
-      setStreamingMessage('');
     } catch (error: any) {
       console.error('Error:', error);
       const errorMessage = 'Sorry, I encountered an error. Please try again.';
