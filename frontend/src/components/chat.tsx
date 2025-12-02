@@ -47,6 +47,10 @@ export default function Chat() {
     const words = response.split(' ');
 
     for (let i = 0; i < words.length; i++) {
+      // Check if user stopped the query
+      if (!abortControllerRef.current) {
+        return null; // Streaming was stopped
+      }
       await new Promise(resolve => setTimeout(resolve, 50));
       setStreamingMessage(prev => prev + (i > 0 ? ' ' : '') + words[i]);
     }
@@ -85,21 +89,10 @@ export default function Chat() {
       const response = await continueTextConversation(newMessages);
 
       // Stream the response
-      await streamResponse(response);
+      const streamResult = await streamResponse(response);
 
-      setMessages([
-        ...newMessages,
-        {
-          role: 'assistant',
-          content: response,
-        },
-      ]);
-      setStreamingMessage('');
-    } catch (error: any) {
-      console.error('Error:', error);
-
-      // Don't show error if user aborted
-      if (error.name === 'AbortError') {
+      // Check if streaming was stopped by user
+      if (streamResult === null) {
         setMessages([
           ...newMessages,
           {
@@ -108,15 +101,25 @@ export default function Chat() {
           },
         ]);
       } else {
-        const errorMessage = 'Sorry, I encountered an error. Please try again.';
         setMessages([
           ...newMessages,
           {
             role: 'assistant',
-            content: errorMessage,
+            content: response,
           },
         ]);
       }
+      setStreamingMessage('');
+    } catch (error: any) {
+      console.error('Error:', error);
+      const errorMessage = 'Sorry, I encountered an error. Please try again.';
+      setMessages([
+        ...newMessages,
+        {
+          role: 'assistant',
+          content: errorMessage,
+        },
+      ]);
       setStreamingMessage('');
     } finally {
       setIsLoading(false);
