@@ -5,56 +5,60 @@ export interface CoreMessage {
   content: string;
 }
 
-const GROQ_API_URL = process.env.GROQ_API_URL || 'http://3.80.111.127:8000';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const BACKEND_API_URL = process.env.GROQ_API_URL || 'http://54.183.212.95:8000';
 
 /**
- * Continue a conversation with the Groq API
+ * Query the database using natural language
  * @param messages - Array of conversation messages
- * @returns The assistant's response
+ * @returns The assistant's response with data
  */
 export async function continueTextConversation(messages: CoreMessage[]): Promise<string> {
   try {
-    const response = await fetch(`${GROQ_API_URL}/api/chat`, {
+    const userQuestion = messages[messages.length - 1].content;
+
+    const response = await fetch(`${BACKEND_API_URL}/api/data/query`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        message: messages[messages.length - 1].content,
-        model: GROQ_MODEL,
-        temperature: 0.7,
-        max_tokens: 1024,
+        question: userQuestion,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Groq API error response:', errorText);
-      throw new Error(`Groq API error: ${response.status} ${response.statusText}`);
+      console.error('Data query API error response:', errorText);
+      throw new Error(`Data query API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    return data.response;
+
+    // Return the formatted answer from the backend
+    if (data.success) {
+      return data.answer;
+    } else {
+      throw new Error(data.error || 'Unknown error occurred');
+    }
   } catch (error) {
-    console.error('Error calling Groq API:', error);
+    console.error('Error calling data query API:', error);
     throw error;
   }
 }
 
 /**
- * Check if the Groq API is available
+ * Check if the backend API is available
  * @returns True if the API is available, false otherwise
  */
 export async function checkAIAvailability(): Promise<boolean> {
   try {
-    const response = await fetch(`${GROQ_API_URL}/health`, {
+    const response = await fetch(`${BACKEND_API_URL}/health`, {
       method: 'GET',
       cache: 'no-store',
     });
     return response.ok;
   } catch (error) {
-    console.error('Error checking Groq API availability:', error);
+    console.error('Error checking backend API availability:', error);
     return false;
   }
 }
