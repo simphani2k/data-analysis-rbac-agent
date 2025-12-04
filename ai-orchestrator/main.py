@@ -104,9 +104,12 @@ async def delete_item(item_id: int):
     raise HTTPException(status_code=404, detail="Item not found")
 
 if __name__ == "__main__":
+    # Determine port based on APP_ENV
+    port = 9000 if APP_ENV == "dev" else 8000
+    
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=int(os.getenv("PORT", 8000)),
+        port=port,
         reload=True
     )
